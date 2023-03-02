@@ -21,7 +21,7 @@ const store = {
 function newsFeed() {
   let template = /* html */ `
     <div>
-      <div>
+      <div class="mb-8">
         <a href="/">Hacker News</a>
       </div>
 
@@ -40,8 +40,8 @@ function newsFeed() {
   const newsList = [];
 
   for (let i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
-    newsList.push(`
-      <div>
+    newsList.push(/* html */ `
+      <div class="mb-4">
         <a href="#/news/${newsFeed[i].id}">
           ${newsFeed[i].title} (${newsFeed[i].comments_count})
         </a>
@@ -68,15 +68,48 @@ function newsDetail() {
 
   let template = /* html */ `
     <div>
-      <div>
+      <div class="mb-8">
         <a target="_blank" href="${newsContent.url}">
           ${newsContent.title}
         </a>
-      </div> 
+      </div>
+
+      <div>
+        {{__comments__}}
+      </div>
     </div>
   `;
 
-  container.innerHTML = template;
+  function getComment(comments) {
+    const commentList = [];
+
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i];
+
+      commentList.push(/* html */ `
+        <div style="padding-left: ${comment.level * 2}rem;" class="mb-4">
+          <div>
+            ${comment.user} | ${comment.time_ago}
+          </div>
+
+          <div>
+            ${comment.content}
+          </div>
+        </div>
+      `);
+
+      if (comment.comments.length > 0) {
+        commentList.push(getComment(comment.comments));
+      }
+    }
+
+    return commentList.join("");
+  }
+
+  container.innerHTML = template.replace(
+    "{{__comments__}}",
+    getComment(newsContent.comments)
+  );
 }
 
 function router() {
