@@ -16,7 +16,16 @@ function getData(url) {
 
 const store = {
   currentPage: 1,
+  feeds: [],
 };
+
+function getFeeds(feeds) {
+  for (let i = 0; i < feeds.length; i++) {
+    feeds[i].read = false;
+  }
+
+  return feeds;
+}
 
 function newsFeed() {
   let template = /* html */ `
@@ -36,12 +45,17 @@ function newsFeed() {
     </div>
   `;
 
-  const newsFeed = getData(NEWS_URL);
+  let newsFeed = store.feeds;
+
+  if (newsFeed.length === 0) {
+    newsFeed = store.feeds = getFeeds(getData(NEWS_URL));
+  }
+
   const newsList = [];
 
   for (let i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
     newsList.push(/* html */ `
-      <div class="mb-4">
+      <div class="mb-4 ${newsFeed[i].read ? "text-gray-300" : "text-gray-900"}">
         <a href="#/news/${newsFeed[i].id}">
           ${newsFeed[i].title} (${newsFeed[i].comments_count})
         </a>
@@ -110,6 +124,13 @@ function newsDetail() {
     "{{__comments__}}",
     getComment(newsContent.comments)
   );
+
+  for (let i = 0; i < store.feeds.length; i++) {
+    if (store.feeds[i].id === Number(id)) {
+      store.feeds[i].read = true;
+      break;
+    }
+  }
 }
 
 function router() {
