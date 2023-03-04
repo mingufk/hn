@@ -1,25 +1,65 @@
 import "./main.css";
 
-const container = document.querySelector("#app");
+interface News {
+  readonly id: number;
+  readonly user: string;
+  readonly time?: number;
+  readonly time_ago: string;
+  readonly type?: string;
+  readonly url?: string;
+  readonly comments_count: number;
+}
+
+interface NewsFeed extends News {
+  readonly title: string;
+  readonly points?: number;
+  readonly domain?: string;
+  read?: boolean;
+}
+
+interface Store {
+  currentPage: number;
+  feeds: NewsFeed[];
+}
+
+interface NewsComment extends News {
+  readonly content: string;
+  readonly comments: NewsComment[];
+  readonly level: number;
+}
+
+interface NewsDetail extends NewsFeed {
+  readonly comments: NewsComment[];
+}
 
 const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
 const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
 
+const store: Store = {
+  currentPage: 1,
+  feeds: [],
+};
+
+const container = document.querySelector("#app");
+
+function updatePage(html: string) {
+  if (container != null) {
+    container.innerHTML = html;
+  } else {
+    console.error("Top-level container is not found.");
+  }
+}
+
 const ajax = new XMLHttpRequest();
 
-function getData(url) {
+function getData<AjaxResponse>(url: string): AjaxResponse {
   ajax.open("GET", url, false);
   ajax.send();
 
   return JSON.parse(ajax.response);
 }
 
-const store = {
-  currentPage: 1,
-  feeds: [],
-};
-
-function getFeeds(feeds) {
+function getFeeds(feeds: NewsFeed[]): NewsFeed[] {
   for (let i = 0; i < feeds.length; i++) {
     feeds[i].read = false;
   }
@@ -66,19 +106,19 @@ function newsFeed() {
   template = template.replace("{{__news_feed__}}", newsList.join(""));
   template = template.replace(
     "{{__prev_page__}}",
-    store.currentPage > 1 ? store.currentPage - 1 : 1
+    String(store.currentPage > 1 ? store.currentPage - 1 : 1)
   );
   template = template.replace(
     "{{__next_page__}}",
-    store.currentPage < 3 ? store.currentPage + 1 : 3
+    String(store.currentPage < 3 ? store.currentPage + 1 : 3)
   );
 
-  container.innerHTML = template;
+  updatePage(template);
 }
 
 function newsDetail() {
   const id = location.hash.substring(7);
-  const newsContent = getData(CONTENT_URL.replace("@id", id));
+  const newsContent = getData<NewsDetail>(CONTENT_URL.replace("@id", id));
 
   let template = /* html */ `
     <div>
@@ -94,7 +134,7 @@ function newsDetail() {
     </div>
   `;
 
-  function getComment(comments) {
+  function getComment(comments: NewsComment[]): string {
     const commentList = [];
 
     for (let i = 0; i < comments.length; i++) {
@@ -120,9 +160,8 @@ function newsDetail() {
     return commentList.join("");
   }
 
-  container.innerHTML = template.replace(
-    "{{__comments__}}",
-    getComment(newsContent.comments)
+  updatePage(
+    template.replace("{{__comments__}}", getComment(newsContent.comments))
   );
 
   for (let i = 0; i < store.feeds.length; i++) {
