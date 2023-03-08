@@ -29,14 +29,15 @@ export default class NewsFeedPage extends Page {
 
     this.api = new NewsFeedApi(NEWS_URL);
     this.store = store;
-
-    if (!this.store.hasFeeds) {
-      this.store.setFeeds(this.api.getData());
-    }
   }
 
-  render = (page = "1") => {
+  render = async (page = "1") => {
     this.store.currentPage = Number(page);
+
+    if (!this.store.hasFeeds) {
+      const feeds = await this.api.getData();
+      this.store.setFeeds(feeds);
+    }
 
     for (
       let i = (this.store.currentPage - 1) * 10;

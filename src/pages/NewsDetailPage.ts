@@ -1,7 +1,7 @@
 import { CONTENT_URL } from "../configs";
 import { NewsDetailApi } from "../core/api";
 import Page from "../core/page";
-import { NewsComment, NewsStore } from "../types";
+import { NewsComment, NewsStore, NewsDetail } from "../types";
 
 const template: string = /* html */ `
   <div>
@@ -25,15 +25,16 @@ export default class NewsDetailPage extends Page {
     this.store = store;
   }
 
-  render = (id: string) => {
+  render = async (id: string) => {
     const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
-    const { url, title, comments } = api.getData();
+
+    const { title, comments, url }: NewsDetail = await api.getData();
 
     this.store.getRead(Number(id));
 
-    this.replace("url", url);
     this.replace("title", title);
     this.replace("comments", this.getComment(comments));
+    this.replace("url", url);
 
     this.updatePage();
   };
