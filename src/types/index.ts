@@ -17,9 +17,16 @@ export interface NewsFeed extends News {
   read?: boolean;
 }
 
-export interface Store {
+export interface NewsStore {
+  getAllFeeds: () => NewsFeed[];
+  getFeed: (position: number) => NewsFeed;
+  setFeeds: (feeds: NewsFeed[]) => void;
+  getRead: (id: number) => void;
+  hasFeeds: boolean;
   currentPage: number;
-  feeds: NewsFeed[];
+  numberOfFeed: number;
+  prevPage: number;
+  nextPage: number;
 }
 
 export interface NewsComment extends News {
@@ -33,6 +40,7 @@ export interface NewsDetail extends NewsFeed {
 }
 
 export interface Route {
-  readonly path: string;
-  readonly page: Page;
+  path: string;
+  page: Page;
+  params: RegExp | null;
 }

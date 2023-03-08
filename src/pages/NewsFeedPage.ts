@@ -1,7 +1,7 @@
 import { NEWS_URL } from "../configs";
 import { NewsFeedApi } from "../core/api";
 import Page from "../core/page";
-import { NewsFeed } from "../types";
+import { NewsStore } from "../types";
 
 const template: string = /* html */ `
   <div>
@@ -22,34 +22,28 @@ const template: string = /* html */ `
 
 export default class NewsFeedPage extends Page {
   private api: NewsFeedApi;
-  private feeds: NewsFeed[];
-  private getFeeds() {
-    for (let i = 0; i < this.feeds.length; i++) {
-      this.feeds[i].read = false;
-    }
-  }
+  private store: NewsStore;
 
-  constructor(containerId: string) {
+  constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
 
     this.api = new NewsFeedApi(NEWS_URL);
-    this.feeds = window.store.feeds;
+    this.store = store;
 
-    if (this.feeds.length === 0) {
-      this.feeds = window.store.feeds = this.api.getData();
-      this.getFeeds();
+    if (!this.store.hasFeeds) {
+      this.store.setFeeds(this.api.getData());
     }
   }
 
-  render() {
-    window.store.currentPage = Number(location.hash.substring(7) || 1);
+  render = (page = "1") => {
+    this.store.currentPage = Number(page);
 
     for (
-      let i = (window.store.currentPage - 1) * 10;
-      i < window.store.currentPage * 10;
+      let i = (this.store.currentPage - 1) * 10;
+      i < this.store.currentPage * 10;
       i++
     ) {
-      const { id, title, comments_count, read } = this.feeds[i];
+      const { id, title, comments_count, read } = this.store.getFeed(i);
 
       this.pushHtml(/* html */ `
           <div class="mb-4 ${read ? "text-gray-300" : "text-gray-900"}">
@@ -61,15 +55,9 @@ export default class NewsFeedPage extends Page {
     }
 
     this.replace("newsFeed", this.getHtml());
-    this.replace(
-      "prevPage",
-      String(window.store.currentPage > 1 ? window.store.currentPage - 1 : 1)
-    );
-    this.replace(
-      "nextPage",
-      String(window.store.currentPage < 3 ? window.store.currentPage + 1 : 3)
-    );
+    this.replace("prevPage", String(this.store.prevPage));
+    this.replace("nextPage", String(this.store.nextPage));
 
     this.updatePage();
-  }
+  };
 }

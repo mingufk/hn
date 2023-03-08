@@ -1,7 +1,7 @@
 import { CONTENT_URL } from "../configs";
 import { NewsDetailApi } from "../core/api";
 import Page from "../core/page";
-import { NewsComment } from "../types";
+import { NewsComment, NewsStore } from "../types";
 
 const template: string = /* html */ `
   <div>
@@ -18,28 +18,25 @@ const template: string = /* html */ `
 `;
 
 export default class NewsDetailPage extends Page {
-  constructor(containerId: string) {
+  private store: NewsStore;
+
+  constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
+    this.store = store;
   }
 
-  render() {
-    const id = location.hash.substring(7);
+  render = (id: string) => {
     const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
-    const newsDetail = api.getData();
+    const { url, title, comments } = api.getData();
 
-    for (let i = 0; i < window.store.feeds.length; i++) {
-      if (window.store.feeds[i].id === Number(id)) {
-        window.store.feeds[i].read = true;
-        break;
-      }
-    }
+    this.store.getRead(Number(id));
 
-    this.replace("url", newsDetail.url);
-    this.replace("title", newsDetail.title);
-    this.replace("comments", this.getComment(newsDetail.comments));
+    this.replace("url", url);
+    this.replace("title", title);
+    this.replace("comments", this.getComment(comments));
 
     this.updatePage();
-  }
+  };
 
   private getComment(comments: NewsComment[]): string {
     for (let i = 0; i < comments.length; i++) {
